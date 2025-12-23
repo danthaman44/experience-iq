@@ -1,0 +1,16 @@
+---
+description: General project rules and conventions
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Project Overview
+- Next.js 16 App Router for frontend
+- FastAPI for backend API
+- Deployed on Vercel
+- TypeScript for frontend, Python for backend
+
+# Code Style
+- Use consistent naming conventions
+- Follow existing patterns before creating new ones
+- Check for linter errors before committing
