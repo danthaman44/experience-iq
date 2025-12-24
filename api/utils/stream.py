@@ -8,7 +8,6 @@ from fastapi.responses import StreamingResponse
 from openai import OpenAI
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 
-
 def stream_text(
     client: OpenAI,
     messages: Sequence[ChatCompletionMessageParam],
