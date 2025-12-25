@@ -27,14 +27,24 @@ import { Textarea } from "./ui/textarea";
 
 const suggestedActions = [
   {
-    title: "What is the weather",
-    label: "in San Francisco?",
-    action: "What is the weather in San Francisco?",
+    title: "Query Cache",
+    label: "Design a key-value cache",
+    action: "Design a key-value cache to save the results of the most recent web server queries",
   },
   {
-    title: "How is python useful",
-    label: "for AI engineers?",
-    action: "How is python useful for AI engineers?",
+    title: "Web Crawler",
+    label: "Design a web crawler",
+    action: "Design a web crawler",
+  },
+  {
+    title: "Social Graph",
+    label: "Design data structures for social network",
+    action: "Design the data structures for a social network",
+  },
+  {
+    title: "Sales Rank",
+    label: "Design Amazon's sales rank",
+    action: "Design Amazon's sales rank by category feature",
   },
 ];
 
