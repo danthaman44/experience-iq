@@ -10,6 +10,7 @@ from .utils.tools import AVAILABLE_TOOLS, TOOL_DEFINITIONS
 from .utils.gemini import gemini_response, stream_gemini_response
 from vercel import oidc
 from vercel.headers import set_headers
+from .utils.supabase import create_message, get_messages, Message
 
 load_dotenv(".env.local")
 
@@ -59,7 +60,9 @@ async def handle_chat_data(request: Request, protocol: str = Query('data')):
     
     if not prompt:
         raise HTTPException(status_code=400, detail="No message content found")
-    
+
+    await create_message(message=Message(thread_id=1, sender="user", content=prompt))
+
     response = StreamingResponse(stream_gemini_response(prompt), media_type='text/event-stream')
     return patch_response_with_headers(response, protocol)
 
@@ -70,3 +73,8 @@ async def generate_response(request: PromptRequest):
         return {"response": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error calling Gemini API: {e}")
+        
+@app.get("/api/messages/{thread_id}")
+async def get_messages_by_thread_id(thread_id: int):
+    data = await get_messages(thread_id)
+    return JSONResponse(content=data, status_code=200)

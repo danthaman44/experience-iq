@@ -9,6 +9,7 @@ alwaysApply: true
 - FastAPI for backend API
 - Deployed on Vercel
 - TypeScript for frontend, Python for backend
+- Supabase PostgresSQL database for persistent storage
 
 # Code Style
 - Use consistent naming conventions
