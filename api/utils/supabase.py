@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from google.genai.types import File
 from supabase import create_client, Client
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
+import traceback
 
 load_dotenv(".env.local")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -17,14 +18,53 @@ class Message(BaseModel):
 
 # Create a message
 async def create_message(message: Message):
-    data = supabase.table("message").insert({
-        "thread_id": message.thread_id,
-        "sender": message.sender,
-        "content": message.content
-    }).execute()
-    return data.data
+    try:
+        data = supabase.table("message").insert({
+            "thread_id": message.thread_id,
+            "sender": message.sender,
+            "content": message.content
+        }).execute()
+        return data.data
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception(f"Error creating message: {e}")
 
 # Get all messages for a thread
 async def get_messages(thread_id: str):
-    data = supabase.table("message").select("*").eq("thread_id", thread_id).execute()
-    return data.data
+    try:
+        data = supabase.table("message").select("*").eq("thread_id", thread_id).execute()
+        return data.data
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception(f"Error getting messages: {e}")
+
+async def save_resume(thread_id: str, file_name: str, resume_file: File):
+    # Extract file attributes from the File object
+    # Access attributes that match the JSON representation
+    file_data = {
+        # Supabase table attributes
+        "thread_id": thread_id,
+        "file_name": file_name,
+        # Google GenAI File object attributes
+        "name": getattr(resume_file, "name", None),
+        "display_name": getattr(resume_file, "display_name", None),
+        "mime_type": getattr(resume_file, "mime_type", None),
+        "size_bytes": getattr(resume_file, "size_bytes", None),
+        "create_time": str(getattr(resume_file, "create_time", None)) if getattr(resume_file, "create_time", None) else None,
+        "expiration_time": str(getattr(resume_file, "expiration_time", None)) if getattr(resume_file, "expiration_time", None) else None,
+        "update_time": str(getattr(resume_file, "update_time", None)) if getattr(resume_file, "update_time", None) else None,
+        "sha256_hash": getattr(resume_file, "sha256_hash", None),
+        "uri": getattr(resume_file, "uri", None),
+        "state": getattr(resume_file, "state", None),
+        "source": getattr(resume_file, "source", None),
+        "video_metadata": getattr(resume_file, "video_metadata", None),
+        "error": getattr(resume_file, "error", None),
+    }
+    
+    # Insert into the resume table
+    try:
+        data = supabase.table("resume").insert(file_data).execute()
+        return data.data
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception(f"Error saving resume: {e}")

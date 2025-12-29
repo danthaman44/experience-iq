@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query, Request as FastAPIRequest, HTTPException, UploadFile, File
+from fastapi import FastAPI, Query, Request as FastAPIRequest, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, JSONResponse
 from openai import OpenAI
 import uuid as uuid_lib
@@ -11,7 +11,7 @@ from .utils.tools import AVAILABLE_TOOLS, TOOL_DEFINITIONS
 from .utils.gemini import gemini_response, stream_gemini_response, upload_file_to_gemini
 from vercel import oidc
 from vercel.headers import set_headers
-from .utils.supabase import create_message, get_messages, Message
+from .utils.supabase import create_message, get_messages, save_resume, Message
 load_dotenv(".env.local")
 
 app = FastAPI()
@@ -84,9 +84,17 @@ async def get_messages_by_thread_id(thread_id: str):
     return JSONResponse(content=data, status_code=200)
 
 @app.post("/api/files/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), uuid: str = Form(None)):
     try:
-        resume_feedback = await upload_file_to_gemini(file)
+        resume_feedback, gemini_file = await upload_file_to_gemini(file)
+        
+        # Use uuid from request if provided, otherwise generate a random UUID
+        thread_id = uuid if uuid else str(uuid_lib.uuid4())
+        
+        # Save the resume file to Supabase
+        file_name = file.filename or "resume.pdf"
+        await save_resume(thread_id=thread_id, file_name=file_name, resume_file=gemini_file)
+        
         return JSONResponse(content={"resume_feedback": resume_feedback}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")

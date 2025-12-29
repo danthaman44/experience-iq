@@ -125,9 +125,10 @@ export function MultimodalInput({
     adjustHeight();
   };
 
-  const uploadFile = useCallback(async (file: File) => {
+  const uploadFile = useCallback(async (file: File, chatId: string) => {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("uuid", chatId);
 
     try {
       const response = await fetch("/api/files/upload", {
@@ -231,9 +232,7 @@ export function MultimodalInput({
         onChange={(event) => {
           const file = event.target.files?.[0];
           if (file) {
-            uploadFile(file);
-            // Reset input value so onChange fires even if the same file is selected again
-            event.target.value = '';
+            uploadFile(file, chatId);
           }
         }}
         multiple

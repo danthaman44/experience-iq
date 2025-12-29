@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from .prompt import system_prompt
-from .supabase import create_message, Message
+from .supabase import create_message, save_resume, Message
 from fastapi import UploadFile, File, HTTPException
 
 load_dotenv(".env.local")
@@ -104,7 +104,7 @@ async def upload_file_to_gemini(file: UploadFile = File(...)):
                 temperature=0.5,
             )
         )   
-        return result.text
+        return result.text, gemini_file
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error uploading file: {e}")
