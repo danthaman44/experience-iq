@@ -68,3 +68,12 @@ async def save_resume(thread_id: str, file_name: str, resume_file: File):
     except Exception as e:
         traceback.print_exc()
         raise Exception(f"Error saving resume: {e}")
+
+# Get resume for a thread
+async def get_resume(thread_id: str):
+    try:
+        data = supabase.table("resume").select("*").eq("thread_id", thread_id).execute()
+        return data.data
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception(f"Error getting resume: {e}")

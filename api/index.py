@@ -6,12 +6,12 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from openai import OpenAI
 import uuid as uuid_lib
 from .utils.prompt import ClientMessage, convert_to_openai_messages
-from .utils.stream import fake_data_streamer, patch_response_with_headers, stream_text
+from .utils.stream import fake_data_streamer, patch_response_with_headers, stream_text, stream_resume_required_message
 from .utils.tools import AVAILABLE_TOOLS, TOOL_DEFINITIONS
 from .utils.gemini import gemini_response, stream_gemini_response, upload_file_to_gemini
 from vercel import oidc
 from vercel.headers import set_headers
-from .utils.supabase import create_message, get_messages, save_resume, Message
+from .utils.supabase import Message, create_message, get_messages, save_resume, get_resume
 load_dotenv(".env.local")
 
 app = FastAPI()
@@ -65,7 +65,14 @@ async def handle_chat_data(request: Request, protocol: str = Query('data')):
     # Use UUID from request if provided, otherwise generate a random UUID
     thread_id = request.uuid if request.uuid else str(uuid_lib.uuid4())
 
+    # Create user message
     await create_message(message=Message(thread_id=thread_id, sender="user", content=prompt))
+
+    existing_resume = await get_resume(thread_id)
+    if not existing_resume:
+        # Stream AI system message asking to upload resume
+        response = StreamingResponse(stream_resume_required_message(thread_id), media_type='text/event-stream')
+        return patch_response_with_headers(response, protocol)
 
     response = StreamingResponse(stream_gemini_response(prompt, thread_id), media_type='text/event-stream')
     return patch_response_with_headers(response, protocol)
