@@ -7,14 +7,17 @@ import time
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from google.genai.types import File
 from .prompt import system_prompt
 from .supabase import create_message, save_resume, Message
 from fastapi import UploadFile, File, HTTPException
 from .logging import log_info
+from .tools import get_message_history_function
 
 load_dotenv(".env.local")
 api_key = os.getenv("GOOGLE_GENERATIVE_AI_API_KEY")
 client = genai.Client(api_key=api_key)
+tools = types.Tool(function_declarations=[get_message_history_function])
 
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB size limit
 GEMINI_MODEL = "gemini-2.5-flash-lite"
@@ -31,6 +34,27 @@ def gemini_response(prompt):
     )
     return response.text
 
+async def handle_function_call(thread_id: str, message: str, resume: File) -> str:
+    # The history retrieved by your tool call:
+    retrieved_history = [
+        {"role": "user", "parts": [{"text": "Hi, I need help with my resume."}]},
+        {"role": "model", "parts": [{"text": "Sure! I can help. What's your target role?"}]},
+        {"role": "user", "parts": [{"text": "Senior Backend Engineer."}]}
+    ]
+
+    # The subsequent API call
+    chat = client.chats.create(
+        model=GEMINI_MODEL,
+        config={
+            "system_instruction": system_prompt(),
+            "max_output_tokens": 1024,
+            "temperature": 0.5,
+        },
+        history=retrieved_history # Pass your tool-retrieved messages here
+    )
+    response = chat.send_message([message, resume])
+    return response.text
+
 async def stream_gemini_response(prompt: str, thread_id: str, file_reference: str):
     """Emit a streaming SSE response from Gemini API."""
     
@@ -42,23 +66,39 @@ async def stream_gemini_response(prompt: str, thread_id: str, file_reference: st
     text_started = False
     
     yield format_sse({"type": "start", "messageId": message_id})
+
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt(),
+        max_output_tokens=1024,
+        temperature=0.5,
+        tools=[tools]
+    )
+
+    retrieved_file = client.files.get(name=file_reference)
+    log_info(f"Retrieved file: {retrieved_file.name}")
     
     try:
         # Use streaming API from Gemini
-        retrieved_file = client.files.get(name=file_reference)
-        log_info(f"Retrieved file: {retrieved_file.name}")
         stream = client.models.generate_content_stream(
-            model='gemini-2.5-flash',
-            contents=[retrieved_file, prompt],
-            config=types.GenerateContentConfig(
-                system_instruction=system_prompt(),
-                max_output_tokens=1024,
-                temperature=0.5,
-            )
+            model=GEMINI_MODEL,
+            contents=[prompt, retrieved_file],
+            config=config
         )
         
         for chunk in stream:
-            if chunk.text:
+            function_call = chunk.candidates[0].content.parts[0].function_call
+            if function_call:
+                log_info(f"Making Gemini function call")
+                response = await handle_function_call(thread_id, prompt, retrieved_file) 
+                if response:
+                    if not text_started:
+                        yield format_sse({"type": "text-start", "id": text_stream_id})
+                        text_started = True
+                    yield format_sse({"type": "text-delta", "id": text_stream_id, "delta": response})
+                    # Save the AI message to the database
+                    await create_message(message=Message(thread_id=thread_id, sender="ai", content=response))
+            elif chunk.text:
+                log_info(f"Skipping Gemini function call")
                 if not text_started:
                     yield format_sse({"type": "text-start", "id": text_stream_id})
                     text_started = True
@@ -101,19 +141,6 @@ async def upload_file_to_gemini(file: UploadFile = File(...)):
             time.sleep(1)
             gemini_file = client.files.get(name=gemini_file.name)
 
-        # Generate content using the uploaded resume
-        # result = client.models.generate_content(
-        #     model=GEMINI_MODEL,
-        #     contents=[
-        #         gemini_file,
-        #         "Briefly thank the user for uploading the resume. Do not output anything else.",
-        #     ],
-        #     config=types.GenerateContentConfig(
-        #         system_instruction=system_prompt(),
-        #         max_output_tokens=1024,
-        #         temperature=0.5,
-        #     )
-        # )
         return gemini_file
     except Exception as e:
         traceback.print_exc()

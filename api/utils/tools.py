@@ -1,4 +1,6 @@
 import requests
+from .supabase import get_messages
+from typing import List
 
 
 def get_current_weather(latitude, longitude):
@@ -43,7 +45,27 @@ TOOL_DEFINITIONS = [{
     },
 }]
 
+# Define the function declaration for the model
+get_message_history_function = {
+    "name": "get_message_history",
+    "description": "Gets the message history for a given thread.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "thread_id": {
+                "type": "string",
+                "description": "The thread ID",
+            },
+        },
+        "required": ["thread_id"],
+    },
+}
+
+async def get_message_history(thread_id: str) -> List[str]:
+    """Get the message history for a given thread."""
+    data = await get_messages(thread_id)
+    return [message["content"] for message in data]
 
 AVAILABLE_TOOLS = {
-    "get_current_weather": get_current_weather,
+    "get_message_history": get_message_history,
 }
