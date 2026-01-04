@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from pydantic import BaseModel, ConfigDict
 
-from .attachment import ClientAttachment
+from .model import ClientAttachment
 
 
 class ToolInvocationState(str, Enum):

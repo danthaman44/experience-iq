@@ -13,6 +13,8 @@ from vercel import oidc
 from vercel.headers import set_headers
 from .utils.supabase import Message, create_message, get_messages, save_resume, get_resume
 from .utils.logging import log_info
+from .utils.model import ChatHistoryResponse, UIMessage, MessagePart
+
 load_dotenv(".env.local")
 
 app = FastAPI()
@@ -33,18 +35,6 @@ class PromptRequest(BaseModel):
 @app.get("/api/health")
 async def health_check():
     return JSONResponse(content={"status": "healthy"}, status_code=200)
-
-# @app.post("/api/chat")
-# async def handle_chat_data(request: Request, protocol: str = Query('data')):
-#     messages = request.messages
-#     openai_messages = convert_to_openai_messages(messages)
-
-#     client = OpenAI(api_key=oidc.get_vercel_oidc_token(), base_url="https://ai-gateway.vercel.sh/v1")
-#     response = StreamingResponse(
-#         stream_text(client, openai_messages, TOOL_DEFINITIONS, AVAILABLE_TOOLS, protocol),
-#         media_type="text/event-stream",
-#     )
-#     return patch_response_with_headers(response, protocol)
 
 @app.post("/api/chat")
 async def handle_chat_data(request: Request, protocol: str = Query('data')):
@@ -113,3 +103,26 @@ async def get_resume_file(thread_id: str):
     if not resume:
         raise HTTPException(status_code=404, detail="Resume not found")
     return JSONResponse(content={"name": resume[0]["file_name"], "contentType": resume[0]["mime_type"]}, status_code=200)
+
+@app.get("/api/chat/history/{thread_id}", response_model=ChatHistoryResponse)
+async def get_chat_history(thread_id: str):
+    """
+    Fetch messages for a specific chat thread
+    """
+    try:  
+        messages = [
+            UIMessage(
+                id="1",
+                role="user",
+                parts=[MessagePart(type="text", text="Hello, how are you?")]
+            ),
+            UIMessage(
+                id="2",
+                role="assistant",
+                parts=[MessagePart(type="text", text="I'm good, thank you! How can I help you today?")]
+            ), 
+        ]
+        return ChatHistoryResponse(messages=messages)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
