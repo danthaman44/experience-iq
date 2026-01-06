@@ -20,16 +20,18 @@ client = genai.Client(api_key=api_key)
 tools = types.Tool(function_declarations=[get_message_history_function])
 
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10 MB size limit
+MAX_OUTPUT_TOKENS = 512
 GEMINI_MODEL = "gemini-2.5-flash-lite"
+DEFAULT_TEMPERATURE = 0.5
 
 def gemini_response(prompt):  
     response = client.models.generate_content(
         model=GEMINI_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
-            system_instruction="You are an expert on Artificial Intelligence",
-            max_output_tokens=500,
-            temperature=0.5,
+            system_instruction=system_prompt(),
+            max_output_tokens=MAX_OUTPUT_TOKENS,
+            temperature=DEFAULT_TEMPERATURE,
         )
     )
     return response.text
@@ -46,8 +48,8 @@ async def handle_function_call(thread_id: str, user_message: str, resume: File) 
         model=GEMINI_MODEL,
         config={
             "system_instruction": system_prompt(),
-            "max_output_tokens": 1024,
-            "temperature": 0.5,
+            "max_output_tokens": MAX_OUTPUT_TOKENS,
+            "temperature": DEFAULT_TEMPERATURE,
         },
         history=retrieved_history # Pass your tool-retrieved messages here
     )
@@ -68,8 +70,8 @@ async def stream_gemini_response(prompt: str, thread_id: str, file_reference: st
 
     config = types.GenerateContentConfig(
         system_instruction=system_prompt(),
-        max_output_tokens=1024,
-        temperature=0.5,
+        max_output_tokens=MAX_OUTPUT_TOKENS,
+        temperature=DEFAULT_TEMPERATURE,
         tools=[tools]
     )
 
@@ -78,6 +80,7 @@ async def stream_gemini_response(prompt: str, thread_id: str, file_reference: st
     
     try:
         # Use streaming API from Gemini
+        accumulated_content = ""  # Accumulate the entire stream content
         stream = client.models.generate_content_stream(
             model=GEMINI_MODEL,
             contents=[prompt, retrieved_file],
@@ -94,19 +97,21 @@ async def stream_gemini_response(prompt: str, thread_id: str, file_reference: st
                         yield format_sse({"type": "text-start", "id": text_stream_id})
                         text_started = True
                     yield format_sse({"type": "text-delta", "id": text_stream_id, "delta": response})
-                    # Save the AI message to the database
-                    await create_message(message=Message(thread_id=thread_id, sender="model", content=response))
+                    accumulated_content += response
             elif chunk.text:
                 log_info(f"Skipping Gemini function call")
                 if not text_started:
                     yield format_sse({"type": "text-start", "id": text_stream_id})
                     text_started = True
                 yield format_sse({"type": "text-delta", "id": text_stream_id, "delta": chunk.text})
-                # Save the AI message to the database
-                await create_message(message=Message(thread_id=thread_id, sender="model", content=chunk.text))
+                accumulated_content += chunk.text
 
         if text_started:
             yield format_sse({"type": "text-end", "id": text_stream_id})
+        
+        # Save the entire accumulated stream as a single message
+        if accumulated_content:
+            await create_message(message=Message(thread_id=thread_id, sender="model", content=accumulated_content))
         
         yield format_sse({"type": "finish"})
         yield "data: [DONE]\n\n"
