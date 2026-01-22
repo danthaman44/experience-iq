@@ -52,7 +52,6 @@ async def save_resume(thread_id: str, file_name: str, resume_file: File):
         "file_name": file_name,
         # Google GenAI File object attributes
         "name": getattr(resume_file, "name", None),
-        "display_name": getattr(resume_file, "display_name", None),
         "mime_type": getattr(resume_file, "mime_type", None),
         "size_bytes": getattr(resume_file, "size_bytes", None),
         "create_time": str(getattr(resume_file, "create_time", None)) if getattr(resume_file, "create_time", None) else None,
@@ -62,8 +61,6 @@ async def save_resume(thread_id: str, file_name: str, resume_file: File):
         "uri": getattr(resume_file, "uri", None),
         "state": getattr(resume_file, "state", None),
         "source": getattr(resume_file, "source", None),
-        "video_metadata": getattr(resume_file, "video_metadata", None),
-        "error": getattr(resume_file, "error", None),
     }
     
     # Check if a resume already exists for this thread_id
