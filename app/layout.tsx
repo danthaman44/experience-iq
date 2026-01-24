@@ -1,4 +1,6 @@
 import "./globals.css";
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackClientApp } from "../stack/client";
 import { GeistSans } from "geist/font/sans";
 import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
@@ -21,12 +23,16 @@ export default function RootLayout({
     <html lang="en">
       <head></head>
       <body className={cn(GeistSans.className, "antialiased")}>
-        <ThemeProvider>
-          <Toaster position="top-center" richColors />
-          <Navbar />
-          {children}
-          <DarkModeToggle />
-        </ThemeProvider>
+        <StackProvider app={stackClientApp}>
+          <StackTheme>
+            <ThemeProvider>
+              <Toaster position="top-center" richColors />
+              <Navbar />
+              {children}
+              <DarkModeToggle />
+            </ThemeProvider>
+          </StackTheme>
+        </StackProvider>
       </body>
     </html>
   );

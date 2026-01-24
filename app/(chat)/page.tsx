@@ -3,10 +3,13 @@
 import { Chat } from "@/components/chat";
 import { useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { useUser } from "@stackframe/stack";
 
 export const dynamic = "force-dynamic";
 
 export default function Page() {
+  useUser({ or: 'redirect' });
+
   const router = useRouter()
   const params = useParams()
 
