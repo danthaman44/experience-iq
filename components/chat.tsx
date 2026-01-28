@@ -6,7 +6,7 @@ import { Overview } from "@/components/overview";
 import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import { useChat, type UIMessage } from "@ai-sdk/react";
 import { toast } from "sonner";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Spinner } from "@/components/ui/spinner"
 

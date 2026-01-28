@@ -1,14 +1,12 @@
 "use client";
 
 import { Button } from "./ui/button";
-import { GitIcon, MessageIcon } from "./icons";
-import Link from "next/link";
+import { MessageIcon } from "./icons";
 import { useRouter } from "next/navigation"
 import { useCallback } from "react";
 import { UserButton } from '@stackframe/stack';
 
-export const Navbar = () => {
-
+export function Navbar() {
   const router = useRouter()
   const refreshSession = useCallback(async () => {
     const uuid = crypto.randomUUID()
