@@ -62,5 +62,6 @@ module.exports = {
   		}
   	}
   },
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- CommonJS is required for Tailwind config files
   plugins: [require("tailwindcss-animate")],
 }

@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
@@ -25,8 +23,8 @@ export async function GET(request: Request) {
         tw="flex h-full w-full bg-black"
         style={{ fontFamily: "Geist Sans" }}
       >
-        {/* @ts-expect-error */}
-        <img src={imageData} alt="vercel opengraph background" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse requires native img elements */}
+        <img src={imageData as unknown as string} alt="vercel opengraph background" />
         <div tw="flex flex-col absolute h-full w-[750px] justify-center left-[50px] pr-[50px] pt-[116px] pb-[166px]">
           <div
             tw="text-zinc-50 tracking-tight flex-grow-1 flex flex-col justify-center leading-[1.1]"

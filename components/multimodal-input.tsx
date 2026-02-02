@@ -25,7 +25,7 @@ import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
 type ChatRequestOptions = {
   headers?: Record<string, string> | Headers;
   body?: object;
-  data?: any;
+  data?: unknown;
 };
 
 const suggestedActions = [
@@ -157,7 +157,7 @@ export function MultimodalInput({
       } else {
         toast.error("Failed to upload resume, please try again!");
       }
-    } catch (_error) {
+    } catch {
       toast.error("Failed to upload resume, please try again!");
     } finally {
       setIsResumeLoading(false);
@@ -248,7 +248,7 @@ export function MultimodalInput({
       } else {
         toast.error("Failed to upload job description, please try again!");
       }
-    } catch (_error) {
+    } catch {
       toast.error("Failed to upload job description, please try again!");
     } finally {
       setIsJobDescriptionLoading(false);

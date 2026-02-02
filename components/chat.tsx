@@ -34,7 +34,7 @@ export function Chat() {
         setInitialMessages(data.messages || []);
         setIsLoadingHistory(false);
       })
-      .catch(error => {
+      .catch(() => {
         toast.error('Failed to load chat history');
         setIsLoadingHistory(false);
       });

@@ -36,18 +36,20 @@ export const PreviewMessage = ({
 
         <div className="flex flex-col gap-2 w-full">
           {message.parts &&
-            message.parts.map((part: any, index: number) => {
-              if (part.type === "text") {
+            message.parts.map((part: unknown, index: number) => {
+              // Type guard for the part object
+              const typedPart = part as { type?: string; text?: string; toolCallId?: string; state?: string; output?: unknown };
+              if (typedPart.type === "text") {
                 return (
                   <div key={index} className="flex flex-col gap-4">
-                    <Streamdown>{part.text}</Streamdown>
+                    <Streamdown>{typedPart.text}</Streamdown>
                   </div>
                 );
               }
               // Handle tool calls - type is "tool-{toolName}" in AI SDK v5
-              if (part.type?.startsWith("tool-")) {
-                const { toolCallId, state, output } = part;
-                const toolName = part.type.replace("tool-", "");
+              if (typedPart.type?.startsWith("tool-")) {
+                const { toolCallId, state, output } = typedPart;
+                const toolName = typedPart.type.replace("tool-", "");
 
                 if (state === "output-available" && output) {
                   return (
@@ -77,11 +79,11 @@ export const PreviewMessage = ({
                   );
                 }
               }
-              if (part.type === "file") {
+              if (typedPart.type === "file") {
                 return (
                   <PreviewAttachment
                     key={index}
-                    attachment={part}
+                    attachment={typedPart as never}
                   />
                 );
               }

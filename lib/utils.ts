@@ -14,11 +14,12 @@ export function sanitizeUIMessages(
 
     if (!message.parts) return message;
 
-    const sanitizedParts = message.parts.filter((part: any) => {
-      if (part.type === "text") return true;
+    const sanitizedParts = message.parts.filter((part: unknown) => {
+      const typedPart = part as { type?: string; state?: string; text?: string };
+      if (typedPart.type === "text") return true;
 
-      if (part.type?.startsWith("tool-")) {
-        return part.state === "output-available";
+      if (typedPart.type?.startsWith("tool-")) {
+        return typedPart.state === "output-available";
       }
 
       return true;
@@ -33,9 +34,10 @@ export function sanitizeUIMessages(
   return messagesBySanitizedParts.filter((message) => {
     if (!message.parts || message.parts.length === 0) return false;
 
-    return message.parts.some((part: any) => {
-      if (part.type === "text" && part.text?.length > 0) return true;
-      if (part.type?.startsWith("tool-") && part.state === "output-available")
+    return message.parts.some((part: unknown) => {
+      const typedPart = part as { type?: string; state?: string; text?: string };
+      if (typedPart.type === "text" && typedPart.text?.length > 0) return true;
+      if (typedPart.type?.startsWith("tool-") && typedPart.state === "output-available")
         return true;
       return false;
     });

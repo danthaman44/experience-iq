@@ -8,8 +8,9 @@ import { Navbar } from "@/components/navbar";
 import { DarkModeToggle } from "@/components/dark-mode-toggle"
 import { ThemeProvider } from "@/components/theme-provider";
 import { ViewSourceCodeButton } from "@/components/ui/source-code-button";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Resummate",
   description:
     "Resummate is an AI-powered resume review platform that helps you create a Top 1% application.",
