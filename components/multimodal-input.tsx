@@ -19,7 +19,6 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { FileAttachment as FileAttachmentComponent } from "./file-attachment";
 import { AttachmentsButton } from "./ui/attachments-button";
-import { MicrophoneButton } from "./ui/microphone-button";
 
 import type { UIMessage, UseChatHelpers } from "@ai-sdk/react";
 
@@ -86,11 +85,6 @@ export function MultimodalInput({
   const [attachedResume, setAttachedResume] = useState<{ name: string; type: string } | null>(null);
   const [attachedJobDescription, setAttachedJobDescription] = useState<{ name: string; type: string } | null>(null);
 
-  // audio recording
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-
   const { width } = useWindowSize();
 
   useEffect(() => {
@@ -146,7 +140,7 @@ export function MultimodalInput({
     });
 
     try {
-      const response = await fetch("/api/files/upload", {
+      const response = await fetch("/api/resume/upload", {
         method: "POST",
         body: formData,
       });
@@ -181,7 +175,7 @@ export function MultimodalInput({
 
   const loadResume = useCallback(async (chatId: string) => {
     try {
-      const response = await fetch(`/api/files/${chatId}`, {
+      const response = await fetch(`/api/resume/${chatId}`, {
         method: "GET",
       });
 
@@ -205,7 +199,7 @@ export function MultimodalInput({
   const removeResume = useCallback(async (chatId: string) => {
     setAttachedResume(null);
     try {
-      const response = await fetch(`/api/files/${chatId}`, {
+      const response = await fetch(`/api/resume/${chatId}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -237,7 +231,7 @@ export function MultimodalInput({
     });
 
     try {
-      const response = await fetch("/api/files/upload", {
+      const response = await fetch("/api/job-description/upload", {
         method: "POST",
         body: formData,
       });
@@ -263,7 +257,7 @@ export function MultimodalInput({
 
   const loadJobDescription = useCallback(async (chatId: string) => {
     try {
-      const response = await fetch(`/api/files/${chatId}?type=job-description`, {
+      const response = await fetch(`/api/job-description/${chatId}`, {
         method: "GET",
       });
 
@@ -287,7 +281,7 @@ export function MultimodalInput({
   const removeJobDescription = useCallback(async (chatId: string) => {
     setAttachedJobDescription(null);
     try {
-      const response = await fetch(`/api/files/${chatId}?type=job-description`, {
+      const response = await fetch(`/api/job-description/${chatId}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -304,46 +298,6 @@ export function MultimodalInput({
   // useEffect(() => {
   //   loadJobDescription(chatId);
   // }, [chatId, loadJobDescription]);
-
-  const handleMicrophoneClick = useCallback(async () => {
-    if (isRecording) {
-      console.log("stopping recording");
-      // Stop recording
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-        mediaRecorderRef.current.stop();
-      }
-      setIsRecording(false);
-    } else {
-      // Start recording
-      try {
-        console.log("starting recording");
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          console.log("event.data", event.data);
-          if (event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
-          }
-        };
-
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-          console.log("audioBlob", audioBlob);
-          // TODO: Handle the recorded audio (e.g., send to API, transcribe, etc.)
-          stream.getTracks().forEach((track) => track.stop());
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
-      } catch (error) {
-        console.error("Error accessing microphone:", error);
-        toast.error("Failed to access microphone. Please check permissions.");
-      }
-    }
-  }, [isRecording]);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
@@ -457,12 +411,6 @@ export function MultimodalInput({
       <AttachmentsButton
         resumeInputRef={resumeInputRef}
         jobDescriptionInputRef={jobDescriptionInputRef}
-        status={status}
-      />
-
-      <MicrophoneButton
-        isRecording={isRecording}
-        onClick={handleMicrophoneClick}
         status={status}
       />
 
