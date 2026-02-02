@@ -1,0 +1,33 @@
+"""
+Application configuration using pydantic-settings.
+"""
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    # Supabase Configuration
+    SUPABASE_URL: str
+    SUPABASE_PUBLISHABLE_DEFAULT_KEY: str
+
+    # Google Generative AI Configuration
+    GOOGLE_GENERATIVE_AI_API_KEY: str
+
+    # Gemini Configuration
+    GEMINI_MODEL: str = "gemini-2.5-flash-lite"
+    MAX_OUTPUT_TOKENS: int = 512
+    DEFAULT_TEMPERATURE: float = 0.5
+    MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10 MB
+
+    # Logging Configuration
+    LOG_LEVEL: str = "INFO"
+
+    model_config = SettingsConfigDict(
+        env_file=".env.local", extra="ignore", case_sensitive=True
+    )
+
+
+# Global settings instance
+settings = Settings()

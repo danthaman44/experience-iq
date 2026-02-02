@@ -1,54 +1,21 @@
+"""
+System prompts and message conversion utilities.
+"""
+
 import json
-from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Dict, List
 
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
-from pydantic import BaseModel, ConfigDict
 
-from .model import ClientAttachment
-
-
-class ToolInvocationState(str, Enum):
-    CALL = "call"
-    PARTIAL_CALL = "partial-call"
-    RESULT = "result"
+from api.core.schemas import ClientMessage
 
 
-class ToolInvocation(BaseModel):
-    state: ToolInvocationState
-    toolCallId: str
-    toolName: str
-    args: Any
-    result: Any
-
-
-class ClientMessagePart(BaseModel):
-    type: str
-    text: Optional[str] = None
-    contentType: Optional[str] = None
-    url: Optional[str] = None
-    data: Optional[Any] = None
-    toolCallId: Optional[str] = None
-    toolName: Optional[str] = None
-    state: Optional[str] = None
-    input: Optional[Any] = None
-    output: Optional[Any] = None
-    args: Optional[Any] = None
-
-    model_config = ConfigDict(extra="allow")
-
-
-class ClientMessage(BaseModel):
-    role: str
-    content: Optional[str] = None
-    parts: Optional[List[ClientMessagePart]] = None
-    experimental_attachments: Optional[List[ClientAttachment]] = None
-    toolInvocations: Optional[List[ToolInvocation]] = None
-
-
-def system_prompt():
+def get_system_prompt() -> str:
     """
-    Revised system instruction with flexible intent-based tool calling logic.
+    Get the system instruction prompt for the AI model.
+
+    Returns:
+        str: System prompt text
     """
     return """
     # ROLE: THE PRINCIPAL SOFTWARE ENGINEERING CAREER ARCHITECT
@@ -178,17 +145,25 @@ def system_prompt():
 def convert_to_openai_messages(
     messages: List[ClientMessage],
 ) -> List[ChatCompletionMessageParam]:
-    openai_messages = []
+    """
+    Convert client messages to OpenAI message format.
+
+    Args:
+        messages: List of client messages
+
+    Returns:
+        List[ChatCompletionMessageParam]: Converted OpenAI messages
+    """
+    openai_messages: List[ChatCompletionMessageParam] = []
 
     for message in messages:
-        message_parts: List[dict] = []
-        tool_calls = []
-        tool_result_messages = []
+        message_parts: List[Dict[str, Any]] = []
+        tool_calls: List[Dict[str, Any]] = []
+        tool_result_messages: List[Dict[str, Any]] = []
 
         if message.parts:
             for part in message.parts:
                 if part.type == "text":
-                    # Ensure empty strings default to ''
                     message_parts.append({"type": "text", "text": part.text or ""})
 
                 elif part.type == "file":
@@ -201,7 +176,6 @@ def convert_to_openai_messages(
                             {"type": "image_url", "image_url": {"url": part.url}}
                         )
                     elif part.url:
-                        # Fall back to including the URL as text if we cannot map the file directly.
                         message_parts.append({"type": "text", "text": part.url})
 
                 elif part.type.startswith("tool-"):
@@ -276,26 +250,25 @@ def convert_to_openai_messages(
 
         if message_parts:
             if len(message_parts) == 1 and message_parts[0]["type"] == "text":
-                content_payload = message_parts[0]["text"]
+                content_payload: Any = message_parts[0]["text"]
             else:
                 content_payload = message_parts
         else:
-            # Ensure that we always provide some content for OpenAI
             content_payload = ""
 
         openai_message: ChatCompletionMessageParam = {
-            "role": message.role,
+            "role": message.role,  # type: ignore
             "content": content_payload,
         }
 
         if tool_calls:
-            openai_message["tool_calls"] = tool_calls
+            openai_message["tool_calls"] = tool_calls  # type: ignore
 
         openai_messages.append(openai_message)
 
         if message.toolInvocations:
             for toolInvocation in message.toolInvocations:
-                tool_message = {
+                tool_message: ChatCompletionMessageParam = {
                     "role": "tool",
                     "tool_call_id": toolInvocation.toolCallId,
                     "content": json.dumps(toolInvocation.result),
@@ -303,6 +276,6 @@ def convert_to_openai_messages(
 
                 openai_messages.append(tool_message)
 
-        openai_messages.extend(tool_result_messages)
+        openai_messages.extend(tool_result_messages)  # type: ignore
 
     return openai_messages
