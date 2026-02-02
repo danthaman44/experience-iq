@@ -48,7 +48,6 @@ export const PreviewMessage = ({
               // Handle tool calls - type is "tool-{toolName}" in AI SDK v5
               if (typedPart.type?.startsWith("tool-")) {
                 const { toolCallId, state, output } = typedPart;
-                const toolName = typedPart.type.replace("tool-", "");
 
                 if (state === "output-available" && output) {
                   return (

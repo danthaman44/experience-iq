@@ -38,6 +38,11 @@ Resummate is an intelligent resume review platform that combines modern hiring s
 - **Deployment**: Vercel (Serverless Functions)
 - **Features**: High-performance REST API, async request handling
 
+**Authentication**
+- **Provider**: [Stack Auth](https://stack-auth.com/)
+- **Features**: Open-source authentication, user management, password/SSO/2FA, organizations & teams, permissions & RBAC
+- **Benefits**: Seamless integration, beautiful pre-built components, headless SDK option
+
 **AI & Machine Learning**
 - **Provider**: Google Gemini API
 - **Capabilities**: Natural language understanding, resume parsing, content generation, personalized recommendations
