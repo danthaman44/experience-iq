@@ -102,3 +102,61 @@ async def delete_resume(thread_id: str):
     except Exception as e:
         traceback.print_exc()
         raise Exception(f"Error deleting resume: {e}")
+
+async def save_job_description(thread_id: str, file_name: str, job_description_file: File):
+    # Extract file attributes from the File object
+    file_data = {
+        # Supabase table attributes
+        "thread_id": thread_id,
+        "file_name": file_name,
+        # Google GenAI File object attributes
+        "name": getattr(job_description_file, "name", None),
+        "mime_type": getattr(job_description_file, "mime_type", None),
+        "size_bytes": getattr(job_description_file, "size_bytes", None),
+        "create_time": str(getattr(job_description_file, "create_time", None)) if getattr(job_description_file, "create_time", None) else None,
+        "expiration_time": str(getattr(job_description_file, "expiration_time", None)) if getattr(job_description_file, "expiration_time", None) else None,
+        "update_time": str(getattr(job_description_file, "update_time", None)) if getattr(job_description_file, "update_time", None) else None,
+        "sha256_hash": getattr(job_description_file, "sha256_hash", None),
+        "uri": getattr(job_description_file, "uri", None),
+        "state": getattr(job_description_file, "state", None),
+        "source": getattr(job_description_file, "source", None),
+    }
+    
+    # Check if a job description already exists for this thread_id
+    try:
+        existing_job_description = supabase.table("job_description").select("*").eq("thread_id", thread_id).execute()
+        
+        if existing_job_description.data:
+            # Update existing job description
+            data = supabase.table("job_description").update(file_data).eq("thread_id", thread_id).execute()
+        else:
+            # Insert new job description
+            data = supabase.table("job_description").insert(file_data).execute()
+        
+        return data.data
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception(f"Error saving job description: {e}")
+
+async def get_job_description(thread_id: str):
+    try:
+        data = supabase.table("job_description").select("*").eq("thread_id", thread_id).execute()
+        if not data.data:
+            return None
+        return data.data
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception(f"Error getting job description: {e}")
+
+async def delete_job_description(thread_id: str):
+    try:
+        # Check if a job description exists for this thread_id
+        existing_job_description = supabase.table("job_description").select("*").eq("thread_id", thread_id).execute()
+        if not existing_job_description.data:
+            return None
+        # Delete the job description
+        data = supabase.table("job_description").delete().eq("thread_id", thread_id).execute()
+        return data.data
+    except Exception as e:
+        traceback.print_exc()
+        raise Exception(f"Error deleting job description: {e}")

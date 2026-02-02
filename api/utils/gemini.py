@@ -36,7 +36,7 @@ def gemini_response(prompt):
     )
     return response.text
 
-async def handle_function_call(thread_id: str, user_message: str, resume: File) -> str:
+async def handle_function_call(thread_id: str, user_message: str, resume: File, job_description: File = None) -> str:
     # The history retrieved by your tool call:
     retrieved_history = []
     past_messages = await get_messages(thread_id)
@@ -53,10 +53,16 @@ async def handle_function_call(thread_id: str, user_message: str, resume: File) 
         },
         history=retrieved_history # Pass your tool-retrieved messages here
     )
-    response = chat.send_message([user_message, resume])
+    
+    # Build message content with resume and optional job description
+    message_content = [user_message, resume]
+    if job_description:
+        message_content.append(job_description)
+    
+    response = chat.send_message(message_content)
     return response.text
 
-async def stream_gemini_response(prompt: str, thread_id: str, file_reference: str):
+async def stream_gemini_response(prompt: str, thread_id: str, file_reference: str, job_description_reference: str = None):
     """Emit a streaming SSE response from Gemini API."""
     
     def format_sse(payload: dict) -> str:
@@ -75,15 +81,27 @@ async def stream_gemini_response(prompt: str, thread_id: str, file_reference: st
         tools=[tools]
     )
 
-    retrieved_file = client.files.get(name=file_reference)
-    log_info(f"Retrieved file: {retrieved_file.name}")
+    retrieved_resume = client.files.get(name=file_reference)
+    log_info(f"Retrieved resume: {retrieved_resume.name}")
+    
+    # Retrieve job description file if provided
+    retrieved_job_description = None
+    if job_description_reference:
+        retrieved_job_description = client.files.get(name=job_description_reference)
+        log_info(f"Retrieved job description: {retrieved_job_description.name}")
     
     try:
         # Use streaming API from Gemini
         accumulated_content = ""  # Accumulate the entire stream content
+        
+        # Build contents list with prompt and files
+        contents = [prompt, retrieved_resume]
+        if retrieved_job_description:
+            contents.append(retrieved_job_description)
+        
         stream = client.models.generate_content_stream(
             model=GEMINI_MODEL,
-            contents=[prompt, retrieved_file],
+            contents=contents,
             config=config
         )
         
@@ -91,7 +109,7 @@ async def stream_gemini_response(prompt: str, thread_id: str, file_reference: st
             function_call = chunk.candidates[0].content.parts[0].function_call
             if function_call:
                 log_info(f"Making Gemini function call")
-                response = await handle_function_call(thread_id, prompt, retrieved_file) 
+                response = await handle_function_call(thread_id, prompt, retrieved_resume, retrieved_job_description) 
                 if response:
                     if not text_started:
                         yield format_sse({"type": "text-start", "id": text_stream_id})

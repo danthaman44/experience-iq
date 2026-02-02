@@ -295,9 +295,9 @@ export function MultimodalInput({
     }
   }, []);
 
-  // useEffect(() => {
-  //   loadJobDescription(chatId);
-  // }, [chatId, loadJobDescription]);
+  useEffect(() => {
+    loadJobDescription(chatId);
+  }, [chatId, loadJobDescription]);
 
   return (
     <div className="relative w-full flex flex-col gap-4">
