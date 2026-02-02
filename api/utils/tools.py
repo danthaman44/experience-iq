@@ -23,27 +23,29 @@ def get_current_weather(latitude, longitude):
         return None
 
 
-TOOL_DEFINITIONS = [{
-    "type": "function",
-    "function": {
-        "name": "get_current_weather",
-        "description": "Get the current weather at a location",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "latitude": {
-                    "type": "number",
-                    "description": "The latitude of the location",
+TOOL_DEFINITIONS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "description": "Get the current weather at a location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "latitude": {
+                        "type": "number",
+                        "description": "The latitude of the location",
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "description": "The longitude of the location",
+                    },
                 },
-                "longitude": {
-                    "type": "number",
-                    "description": "The longitude of the location",
-                },
+                "required": ["latitude", "longitude"],
             },
-            "required": ["latitude", "longitude"],
         },
-    },
-}]
+    }
+]
 
 # Define the function declaration for the model
 get_message_history_function = {
@@ -61,10 +63,12 @@ get_message_history_function = {
     },
 }
 
+
 async def get_message_history(thread_id: str) -> List[str]:
     """Get the message history for a given thread."""
     data = await get_messages(thread_id)
     return [message["content"] for message in data]
+
 
 AVAILABLE_TOOLS = {
     "get_message_history": get_message_history,

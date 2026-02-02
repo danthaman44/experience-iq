@@ -9,6 +9,7 @@ from openai import OpenAI
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 from .supabase import create_message, Message
 
+
 def stream_text(
     client: OpenAI,
     messages: Sequence[ChatCompletionMessageParam],
@@ -18,6 +19,7 @@ def stream_text(
 ):
     """Yield Server-Sent Events for a streaming chat completion."""
     try:
+
         def format_sse(payload: dict) -> str:
             return f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
 
@@ -52,7 +54,11 @@ def stream_text(
                         yield format_sse({"type": "text-start", "id": text_stream_id})
                         text_started = True
                     yield format_sse(
-                        {"type": "text-delta", "id": text_stream_id, "delta": delta.content}
+                        {
+                            "type": "text-delta",
+                            "id": text_stream_id,
+                            "delta": delta.content,
+                        }
                     )
 
                 if delta.tool_calls:
@@ -155,7 +161,9 @@ def stream_text(
 
                 raw_arguments = state["arguments"]
                 try:
-                    parsed_arguments = json.loads(raw_arguments) if raw_arguments else {}
+                    parsed_arguments = (
+                        json.loads(raw_arguments) if raw_arguments else {}
+                    )
                 except Exception as error:
                     yield format_sse(
                         {
@@ -275,26 +283,32 @@ async def fake_data_streamer():
         yield format_sse({"type": "text-start", "id": text_stream_id})
         yield format_sse({"type": "text-delta", "id": text_stream_id, "delta": chunk})
         yield format_sse({"type": "text-end", "id": text_stream_id})
-        
+
     yield format_sse({"type": "finish"})
     yield "data: [DONE]\n\n"
 
     # Stream AI system message asking to upload resume
+
+
 async def stream_resume_required_message(thread_id: str):
     def format_sse(payload: dict) -> str:
         return f"data: {json.dumps(payload, separators=(',', ':'))}\n\n"
-    
+
     message_id = f"msg-{uuid.uuid4().hex}"
     text_stream_id = "text-1"
     message_text = "Please upload a resume before chatting with Resummate."
-    
+
     yield format_sse({"type": "start", "messageId": message_id})
     yield format_sse({"type": "text-start", "id": text_stream_id})
-    yield format_sse({"type": "text-delta", "id": text_stream_id, "delta": message_text})
+    yield format_sse(
+        {"type": "text-delta", "id": text_stream_id, "delta": message_text}
+    )
     yield format_sse({"type": "text-end", "id": text_stream_id})
-    
+
     # Save the AI message to the database
-    await create_message(message=Message(thread_id=thread_id, sender="model", content=message_text))
-    
+    await create_message(
+        message=Message(thread_id=thread_id, sender="model", content=message_text)
+    )
+
     yield format_sse({"type": "finish"})
     yield "data: [DONE]\n\n"
