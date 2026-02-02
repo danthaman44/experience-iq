@@ -33,8 +33,12 @@ export default function RootLayout({
               <main className="pt-14">
                 {children}
               </main>
-              <ViewSourceCodeButton />
-              <DarkModeToggle />
+              <div className="hidden sm:block">
+                <ViewSourceCodeButton />
+              </div>
+              <div className="hidden sm:block">
+                <DarkModeToggle />
+              </div>
             </ThemeProvider>
           </StackTheme>
         </StackProvider>

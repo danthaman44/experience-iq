@@ -29,8 +29,9 @@ Resummate is an intelligent resume review platform that combines modern hiring s
 **Frontend**
 - **Framework**: Next.js 16
 - **Language**: TypeScript
+- **Styling**: Tailwind CSS
 - **Deployment**: Vercel
-- **Features**: Server-side rendering, API routes, optimized performance
+- **Features**: Server-side rendering, API routes, optimized performance, responsive design
 
 **Backend**
 - **Framework**: FastAPI
@@ -51,6 +52,32 @@ Resummate is an intelligent resume review platform that combines modern hiring s
 - **Platform**: Supabase PostgreSQL
 - **Features**: Persistent storage, real-time capabilities, row-level security
 - **Data**: User profiles, resume versions, analysis history, feedback cache
+
+### Responsive Design with Tailwind CSS
+
+Resummate provides a fully responsive user experience across all device sizes, from mobile phones to desktop monitors. This is achieved through Tailwind CSS's utility-first approach and mobile-first breakpoint system.
+
+#### Key Responsive Features
+
+**Mobile-First Approach**
+- Base styles target mobile devices by default
+- Breakpoint utilities progressively enhance for larger screens
+- Ensures optimal performance on mobile devices
+
+**Tailwind Breakpoints**
+```
+sm:  640px  - Small devices (landscape phones)
+md:  768px  - Medium devices (tablets)
+lg:  1024px - Large devices (desktops)
+xl:  1280px - Extra large devices (large desktops)
+2xl: 1536px - 2X large devices (larger desktops)
+```
+
+**Benefits**
+- Seamless experience across all devices
+- Improved mobile usability and performance
+- Reduced layout shift and better Core Web Vitals
+- Maintainable and readable responsive code
 
 ---
 
