@@ -118,3 +118,13 @@ class GenerateResponse(BaseModel):
     """Response model for generate endpoint."""
 
     response: str
+
+
+class User(BaseModel):
+    """User model for user registration."""
+
+    id: str
+    displayName: str | None = None
+    primaryEmail: str | None = None
+    primaryEmailVerified: bool = False
+    profileImageUrl: str | None = None

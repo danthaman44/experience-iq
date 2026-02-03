@@ -9,7 +9,7 @@ from google.genai.types import File
 from supabase import Client
 
 from api.core.logging import log_error
-from api.core.schemas import Message
+from api.core.schemas import Message, User
 
 
 async def create_message(supabase: Client, message: Message) -> List[Dict[str, Any]]:
@@ -326,3 +326,51 @@ def _extract_file_data(thread_id: str, file_name: str, file: File) -> Dict[str, 
         "state": getattr(file, "state", None),
         "source": getattr(file, "source", None),
     }
+
+
+def create_or_update_user(supabase: Client, user: User) -> List[Dict[str, Any]]:
+    """
+    Create or update a user in the database.
+
+    Args:
+        supabase: Supabase client instance
+        user: User data to create or update
+
+    Returns:
+        List[Dict[str, Any]]: Created or updated user data
+    """
+    try:
+        existing_user = supabase.table("user").select("*").eq("id", user.id).execute()
+        if existing_user.data:
+            data = (
+                supabase.table("user")
+                .update(
+                    {
+                        "display_name": user.displayName,
+                        "primary_email": user.primaryEmail,
+                        "primary_email_verified": user.primaryEmailVerified,
+                        "profile_image_url": user.profileImageUrl,
+                    }
+                )
+                .eq("id", user.id)
+                .execute()
+            )
+        else:
+            data = (
+                supabase.table("user")
+                .insert(
+                    {
+                        "id": user.id,
+                        "display_name": user.displayName,
+                        "primary_email": user.primaryEmail,
+                        "primary_email_verified": user.primaryEmailVerified,
+                        "profile_image_url": user.profileImageUrl,
+                    }
+                )
+                .execute()
+            )
+        return data.data
+    except Exception as e:
+        log_error(f"Error creating or updating user: {e}")
+        traceback.print_exc()
+        raise Exception(f"Error creating or updating user: {e}")

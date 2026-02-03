@@ -8,6 +8,7 @@ from vercel.headers import set_headers
 from api.chat.router import router as chat_router
 from api.resume.router import router as resume_router
 from api.job_description.router import router as job_description_router
+from api.user.router import router as user_router
 from api.core.logging import log_info, logger
 from api.core.schemas import HealthCheckResponse
 
@@ -39,6 +40,7 @@ async def vercel_headers_middleware(request: FastAPIRequest, call_next):
 app.include_router(chat_router)
 app.include_router(resume_router)
 app.include_router(job_description_router)
+app.include_router(user_router)
 
 
 @app.get(
