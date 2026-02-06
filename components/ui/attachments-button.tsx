@@ -34,11 +34,12 @@ function PureAttachmentsButton({
           <PaperclipIcon size={14} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="top" className="min-w-[160px]">
+      <DropdownMenuContent align="start" side="top" className="w-screen md:w-auto md:min-w-[160px]">
         <DropdownMenuItem
           onClick={() => {
             resumeInputRef.current?.click();
           }}
+          className="w-full h-12 cursor-pointer"
         >
           Resume
         </DropdownMenuItem>
@@ -46,6 +47,7 @@ function PureAttachmentsButton({
           onClick={() => {
             jobDescriptionInputRef.current?.click();
           }}
+          className="w-full h-12 cursor-pointer"
         >
           Job Description
         </DropdownMenuItem>

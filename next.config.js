@@ -3,6 +3,7 @@
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const nextConfig = {
+  devIndicators: false,
   rewrites: async () => {
     return [
       {
